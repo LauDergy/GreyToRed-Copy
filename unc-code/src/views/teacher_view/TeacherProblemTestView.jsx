@@ -21,10 +21,10 @@ const INITIAL_CODE =
 
    Props:
      problem:  {
-       title, difficulty, instructions,
-       constraints:    string[],        — from CreateProblemView form
-       testcases:      string[],        — visible (raw string inputs)
-       hiddenTestcases: string[],       — hidden (raw string inputs)
+       title, difficulty, description,
+       constraints:     string[],        — from CreateProblemView form
+       sampleTestcases: { input }[],    — visible
+       hiddenTestcases: { input }[],    — hidden
      }
      onBack:  () => void  — return to CreateProblemView
 
@@ -40,8 +40,9 @@ const TeacherProblemTestView = ({ problem, onBack }) => {
     const [tcTab,         setTcTab]         = useState('visible'); // 'visible' | 'hidden'
     const [activeOutput,  setActiveOutput]  = useState(0);
 
-    const visibleTCs = problem?.testcases?.filter(Boolean)       ?? [];
-    const hiddenTCs  = problem?.hiddenTestcases?.filter(Boolean) ?? [];
+    const extractTc = (tc) => typeof tc === 'string' ? tc : (tc?.input || JSON.stringify(tc));
+    const visibleTCs = problem?.sampleTestcases?.filter(Boolean).map(extractTc) ?? [];
+    const hiddenTCs  = problem?.hiddenTestcases?.filter(Boolean).map(extractTc) ?? [];
     const allTCs     = [...visibleTCs, ...hiddenTCs];
 
     // Simulate Docker run — in production: POST /api/run { code, testcases: allTCs }
@@ -93,10 +94,10 @@ const TeacherProblemTestView = ({ problem, onBack }) => {
                 <div className="flex-1 overflow-y-auto px-8 py-6 space-y-7 custom-scrollbar">
 
                     {/* Description */}
-                    {problem?.instructions && (
+                    {problem?.description && (
                         <div>
                             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Description</p>
-                            <p className="text-sm text-slate-600 leading-relaxed">{problem.instructions}</p>
+                            <p className="text-sm text-slate-600 leading-relaxed">{problem.description}</p>
                         </div>
                     )}
 

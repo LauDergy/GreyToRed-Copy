@@ -1,53 +1,62 @@
-import { Library, Compass, FilePlus2 } from 'lucide-react';
+import { Library, Compass, FilePlus2, BookOpenCheck } from 'lucide-react';
 
 /**
  * ProblemSetsView  (Teacher)
  *
  * Landing page shown when the teacher clicks "Problem Sets" in the sidebar.
- * Presents three navigation cards:
- *   1. Your Collection   — problems the teacher has created
- *   2. Explore Problem Sets — browse the public/shared library
- *   3. Create New Problem — open the problem editor
+ * Presents four navigation cards:
+ *   1. Your Collection   — problems the teacher has created or saved
+ *   2. Published Problems— problems the teacher has authored/published
+ *   3. Explore Problem Sets — browse the public/shared library
+ *   4. Create New Problem — open the problem editor
  *
  * Props:
  *   onCollection:  () => void
+ *   onPublished:   () => void
  *   onExplore:     () => void
  *   onCreate:      () => void
  *
  * When the backend is ready, wire each card to its respective route.
  * Expected API endpoints:
- *   GET  /api/problems?owner=me          → Your Collection
+ *   GET  /api/problems?owner=me          → Published
  *   GET  /api/problems?visibility=public → Explore
  *   POST /api/problems                   → Create
  */
 
 const OPTIONS = [
     {
-        key:   'collection',
+        key: 'collection',
         label: 'Your Collection',
-        icon:  Library,
-        desc:  'Problems you have created or saved',
+        icon: Library,
+        desc: 'Problems you have saved',
     },
     {
-        key:   'explore',
+        key: 'published',
+        label: 'Published Problems',
+        icon: BookOpenCheck,
+        desc: 'Problems you have authored and published',
+    },
+    {
+        key: 'explore',
         label: 'Explore Problem Sets',
-        icon:  Compass,
-        desc:  'Browse problems shared by the community',
+        icon: Compass,
+        desc: 'Browse problems shared by the community',
     },
     {
-        key:   'create',
+        key: 'create',
         label: 'Create New Problem',
-        icon:  FilePlus2,
-        desc:  'Write a new coding problem from scratch',
+        icon: FilePlus2,
+        desc: 'Write a new coding problem from scratch',
     },
 ];
 
 const ProblemSetsView = ({
     onCollection,
+    onPublished,
     onExplore,
     onCreate,
 }) => {
-    const handlers = { collection: onCollection, explore: onExplore, create: onCreate };
+    const handlers = { collection: onCollection, published: onPublished, explore: onExplore, create: onCreate };
 
     return (
         <div className="p-10 animate-in fade-in duration-500 max-w-xl mx-auto">

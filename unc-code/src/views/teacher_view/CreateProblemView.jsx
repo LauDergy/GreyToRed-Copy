@@ -55,17 +55,20 @@ const RepeatableList = ({ rows, onChange, onAdd, onRemove, placeholder = '', max
 
 /**
  * Props:
+ *   initialProblem: Problem | null
  *   onBack:    () => void
  *   onTest:    (formData) => void  — run the problem in the compiler preview
- *   onFinish:  (formData) => void  — POST /api/problems
+ *   onFinish:  (formData) => void  — POST or PUT /api/problems
  */
-const CreateProblemView = ({ onBack, onTest, onFinish }) => {
-    const [title,       setTitle]       = useState('');
-    const [difficulty,  setDifficulty]  = useState('');
-    const [instructions, setInstructions] = useState('');
-    const [constraints, setConstraints] = useState(['', '', '']);
-    const [testcases,   setTestcases]   = useState(['', '', '']);
-    const [hidden,      setHidden]      = useState(['', '']);
+const CreateProblemView = ({ initialProblem, onBack, onTest, onFinish }) => {
+    const formatTc = (tc) => typeof tc === 'string' ? tc : (tc.input ? `${tc.input} | Expected: ${tc.expected}` : '');
+
+    const [title,       setTitle]       = useState(initialProblem?.title || '');
+    const [difficulty,  setDifficulty]  = useState(initialProblem?.difficulty || '');
+    const [instructions, setInstructions] = useState(initialProblem?.description || '');
+    const [constraints, setConstraints] = useState(initialProblem?.constraints?.length ? initialProblem.constraints : ['', '', '']);
+    const [testcases,   setTestcases]   = useState(initialProblem?.sampleTestcases?.length ? initialProblem.sampleTestcases.map(formatTc) : ['', '', '']);
+    const [hidden,      setHidden]      = useState(initialProblem?.hiddenTestcases?.length ? initialProblem.hiddenTestcases.map(formatTc) : ['', '']);
 
     /* Helpers for repeatable lists */
     const listHelpers = (setter) => ({
@@ -75,10 +78,11 @@ const CreateProblemView = ({ onBack, onTest, onFinish }) => {
     });
 
     const buildFormData = () => ({
-        title, difficulty, instructions,
+        id: initialProblem?.id,
+        title, difficulty, description: instructions,
         constraints: constraints.filter(Boolean),
-        testcases:   testcases.filter(Boolean),
-        hiddenTestcases: hidden.filter(Boolean),
+        sampleTestcases:   testcases.filter(Boolean).map(tc => ({ input: tc })), // Rough mock mapping
+        hiddenTestcases: hidden.filter(Boolean).map(tc => ({ input: tc })),
     });
 
     const handleTest   = () => onTest?.(buildFormData());
@@ -105,7 +109,7 @@ const CreateProblemView = ({ onBack, onTest, onFinish }) => {
             >
                 {/* Heading */}
                 <h1 className="text-4xl font-light text-slate-900 tracking-tight">
-                    Create New Problem
+                    {initialProblem ? 'Edit Problem' : 'Create New Problem'}
                 </h1>
 
                 {/* ── Row 1: Title + Difficulty ── */}
@@ -203,7 +207,7 @@ const CreateProblemView = ({ onBack, onTest, onFinish }) => {
                         className="flex items-center gap-2 bg-red-500 hover:bg-red-600 active:scale-95 text-white text-sm font-bold px-8 py-2.5 rounded-full shadow-sm shadow-red-200 transition-all duration-200"
                     >
                         <CheckCircle size={15} />
-                        Finish
+                        {initialProblem ? 'Save Changes' : 'Finish'}
                     </button>
                 </div>
             </form>

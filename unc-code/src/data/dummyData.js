@@ -12,7 +12,9 @@
 
 // ── Student profile (session)────────────────────────────────────────────────────────
 export const DUMMY_STUDENT = {
-    name: 'John Michael Laureles',
+    firstName: 'John Michael',
+    lastName: 'Laureles',
+    name: 'John Michael Laureles', // Keeping name for backward compatibility during transition
     course: '1st year BSCS',
     studentId: '25-29019',
     // NOTE: tasksCompleted, totalTasks, gradePercentage are now derived
@@ -84,6 +86,33 @@ export function computeStudentStats(tasks = []) {
     return { tasksCompleted, totalTasks, tasksPct, gradePoints, maxPoints, gradePercentage };
 }
 
+// ── Database Mock for any Student's Stats ──────────────────────────────────
+// In production: This entirely goes away, replaced by GET /api/students/:id/stats
+export function getMockStudentStats(studentId) {
+    // If it's our main demo student, derive exactly from their defined tasks
+    if (studentId === '25-29019') {
+        const stats = computeStudentStats(DUMMY_TASKS);
+        return {
+            subjects: DUMMY_SUBJECTS.map(s => s.name),
+            tasksCompleted: stats.tasksCompleted,
+            totalTasks: stats.totalTasks,
+            gradePercentage: stats.gradePercentage,
+        };
+    }
+    // For other mock students, return deterministic mock data based on their ID
+    // This allows testing the UI for 30+ students without hardcoding 30 objects.
+    const hash = studentId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) || 123;
+    const total = 5 + (hash % 10);
+    const completed = hash % (total + 1);
+    
+    return {
+        subjects: ['Fundamentals of Programming', hash % 2 === 0 ? 'Discrete Mathematics' : 'Data Structures'],
+        tasksCompleted: completed,
+        totalTasks: total,
+        gradePercentage: total > 0 ? Math.round((completed / total) * 100) : 0,
+    };
+}
+
 // ── Problem lookup map ────────────────────────────────────────────────────
 // Usage: PROBLEM_MAP[task.problemId]  → full Problem object
 // In production: GET /api/problems/:id  replaces this lookup.
@@ -145,11 +174,8 @@ DUMMY_PROBLEMS.forEach(p => { PROBLEM_MAP[p.id] = p; });
 // Problems that exist in DUMMY_PROBLEMS are referenced directly (no duplication).
 // Public-only stubs (pub-*) carry only summary fields needed by the Explore card.
 export const DUMMY_PUBLIC_PROBLEMS = [
-    // ── From teacher's bank (full data already in PROBLEM_MAP) ──
-    DUMMY_PROBLEMS.find(p => p.id === 'prob-2'),  // Two Sum          — easy
-    DUMMY_PROBLEMS.find(p => p.id === 'prob-1'),  // Sorting Algorithm — medium
-    DUMMY_PROBLEMS.find(p => p.id === 'prob-4'),  // Binary Search     — medium
-    DUMMY_PROBLEMS.find(p => p.id === 'prob-5'),  // Linked List Reversal — hard
+    // ── All from teacher's bank (already in PROBLEM_MAP) ──
+    ...DUMMY_PROBLEMS,
     // ── Public-only problems (not in teacher's bank) ────────────
     { id: 'pub-t1', title: 'Triangle', difficulty: 'easy', author: 'Danny Casimero', description: 'Given three integers a, b, c representing side lengths, determine if they can form a valid triangle.' },
     { id: 'pub-m1', title: 'Modulus', difficulty: 'easy', author: 'Danny Casimero', description: 'Given two integers a and b, return a mod b. Handle edge cases where b is zero.' },
@@ -169,18 +195,18 @@ export const DUMMY_SECTIONS = [
 // ── Students per section ───────────────────────────────────────────────────
 export const DUMMY_SECTION_STUDENTS = {
     'BCS221-OCa': [
-        { id: 's1', name: 'John Michael Laureles', email: 'john.laureles@unc.edu.ph', studentId: '25-29019' },
-        { id: 's2', name: 'Maria Elena Santos', email: 'maria.santos@unc.edu.ph', studentId: '25-29020' },
-        { id: 's3', name: 'Robert James Cruz', email: 'robert.cruz@unc.edu.ph', studentId: '25-29021' },
-        { id: 's4', name: 'Angela Rose Reyes', email: 'angela.reyes@unc.edu.ph', studentId: '25-29022' },
-        { id: 's5', name: 'Mark Anthony dela Torre', email: 'mark.delatorre@unc.edu.ph', studentId: '25-29023' },
-        { id: 's6', name: 'Christine Joy Mendoza', email: 'christine.mendoza@unc.edu.ph', studentId: '25-29024' },
-        { id: 's7', name: 'Daniel Pio Ramos', email: 'daniel.ramos@unc.edu.ph', studentId: '25-29025' },
+        { id: 's1', firstName: 'John Michael', lastName: 'Laureles', name: 'John Michael Laureles', email: 'john.laureles@unc.edu.ph', studentId: '25-29019' },
+        { id: 's2', firstName: 'Maria Elena', lastName: 'Santos', name: 'Maria Elena Santos', email: 'maria.santos@unc.edu.ph', studentId: '25-29020' },
+        { id: 's3', firstName: 'Robert James', lastName: 'Cruz', name: 'Robert James Cruz', email: 'robert.cruz@unc.edu.ph', studentId: '25-29021' },
+        { id: 's4', firstName: 'Angela Rose', lastName: 'Reyes', name: 'Angela Rose Reyes', email: 'angela.reyes@unc.edu.ph', studentId: '25-29022' },
+        { id: 's5', firstName: 'Mark Anthony', lastName: 'dela Torre', name: 'Mark Anthony dela Torre', email: 'mark.delatorre@unc.edu.ph', studentId: '25-29023' },
+        { id: 's6', firstName: 'Christine Joy', lastName: 'Mendoza', name: 'Christine Joy Mendoza', email: 'christine.mendoza@unc.edu.ph', studentId: '25-29024' },
+        { id: 's7', firstName: 'Daniel Pio', lastName: 'Ramos', name: 'Daniel Pio Ramos', email: 'daniel.ramos@unc.edu.ph', studentId: '25-29025' },
     ],
     'BCS221-OCb': [
-        { id: 's8', name: 'Patricia Anne Villanueva', email: 'patricia.villanueva@unc.edu.ph', studentId: '25-29030' },
-        { id: 's9', name: 'Joshua Emmanuel Lim', email: 'joshua.lim@unc.edu.ph', studentId: '25-29031' },
-        { id: 's10', name: 'Sophia Marie Tan', email: 'sophia.tan@unc.edu.ph', studentId: '25-29032' },
+        { id: 's8', firstName: 'Patricia Anne', lastName: 'Villanueva', name: 'Patricia Anne Villanueva', email: 'patricia.villanueva@unc.edu.ph', studentId: '25-29030' },
+        { id: 's9', firstName: 'Joshua Emmanuel', lastName: 'Lim', name: 'Joshua Emmanuel Lim', email: 'joshua.lim@unc.edu.ph', studentId: '25-29031' },
+        { id: 's10', firstName: 'Sophia Marie', lastName: 'Tan', name: 'Sophia Marie Tan', email: 'sophia.tan@unc.edu.ph', studentId: '25-29032' },
         { id: 's11', name: 'Miguel Antonio Flores', email: 'miguel.flores@unc.edu.ph', studentId: '25-29033' },
         { id: 's12', name: 'Kristine Claire Ocampo', email: 'kristine.ocampo@unc.edu.ph', studentId: '25-29034' },
     ],

@@ -1,10 +1,13 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
     ArrowLeft, ChevronDown, ChevronUp, Search, UserPlus,
     Trash2, Archive, Eye, X, AlertTriangle, CheckCircle,
     Users, BookOpen, Filter,
 } from 'lucide-react';
-import { DUMMY_SECTIONS, DUMMY_SECTION_STUDENTS } from '../../data/dummyData';
+import { 
+    DUMMY_SECTIONS, DUMMY_SECTION_STUDENTS, 
+    getMockStudentStats
+} from '../../data/dummyData';
 
 /* ─────────────────────────────────────────────────────────────
    Tiny helpers
@@ -66,6 +69,115 @@ const ConfirmModal = ({ open, icon, title, message, confirmLabel, confirmClass, 
 };
 
 /* ─────────────────────────────────────────────────────────────
+   Student Profile Modal
+───────────────────────────────────────────────────────────── */
+const ProfileModal = ({ student, onClose }) => {
+    const [stats, setStats] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (!student) return;
+        
+        setLoading(true);
+        // TODO: In production, replace this timeout with:
+        // fetch(`/api/students/${student.id}/stats`).then(...)
+        
+        const fetchStats = setTimeout(() => {
+            // Fetch stats from our simulated database endpoint
+            setStats(getMockStudentStats(student.studentId));
+            setLoading(false);
+        }, 500); // Mock network latency
+
+        return () => clearTimeout(fetchStats);
+    }, [student]);
+
+    if (!student) return null;
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 w-full max-w-md p-8 animate-in zoom-in-95 duration-200 relative overflow-hidden flex flex-col max-h-[90vh]">
+                <button
+                    onClick={onClose}
+                    className="absolute top-6 right-6 w-8 h-8 rounded-full bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-slate-400 transition-colors z-10"
+                >
+                    <X size={14} strokeWidth={3} />
+                </button>
+                
+                <div className="overflow-y-auto custom-scrollbar -mx-2 px-2 pb-2">
+                    <div className="flex flex-col items-center text-center mb-8 mt-2">
+                        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-red-400 to-rose-500 flex items-center justify-center text-white text-3xl font-bold shadow-lg shadow-red-200 mb-4 shrink-0">
+                            {(student.firstName?.[0] || '') + (student.lastName?.[0] || '')}
+                        </div>
+                        <h2 className="text-2xl font-semibold text-slate-800 tracking-tight">{student.name}</h2>
+                        <p className="text-sm text-slate-400 mt-1">{student.email}</p>
+                    </div>
+                    
+                    <div className="space-y-6">
+                        {/* ── Basic Info ── */}
+                        <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100 space-y-4">
+                            <div className="flex justify-between items-center pb-3 border-b border-slate-200/60">
+                                <span className="text-xs font-bold uppercase tracking-widest text-slate-400">First Name</span>
+                                <span className="text-sm font-medium text-slate-700">{student.firstName || '-'}</span>
+                            </div>
+                            <div className="flex justify-between items-center pb-3 border-b border-slate-200/60">
+                                <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Last Name</span>
+                                <span className="text-sm font-medium text-slate-700">{student.lastName || '-'}</span>
+                            </div>
+                            <div className="flex justify-between items-center pb-3 border-b border-slate-200/60">
+                                <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Student ID</span>
+                                <span className="text-sm font-medium text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200 font-mono">{student.studentId}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-xs font-bold uppercase tracking-widest text-slate-400">System ID</span>
+                                <span className="text-xs text-slate-400 font-mono">{student.id}</span>
+                            </div>
+                        </div>
+
+                        {/* ── Performance & Enrollment (Fetched via API) ── */}
+                        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm min-h-[140px] flex flex-col justify-center">
+                            {loading || !stats ? (
+                                <div className="flex flex-col items-center justify-center space-y-3 py-4 opacity-50">
+                                    <div className="w-5 h-5 border-2 border-slate-300 border-t-red-500 rounded-full animate-spin"></div>
+                                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Loading stats...</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-5 animate-in fade-in duration-300">
+                                    <div>
+                                        <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Enrolled Subjects</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {stats.subjects.map(sub => (
+                                                <span key={sub} className="text-xs font-semibold bg-red-50 text-red-600 px-2.5 py-1 rounded-lg border border-red-100">
+                                                    {sub}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-100">
+                                        <div>
+                                            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Tasks</p>
+                                            <p className="text-xl font-light text-slate-800">
+                                                <span className="font-semibold">{stats.tasksCompleted}</span>
+                                                <span className="text-sm text-slate-400"> / {stats.totalTasks}</span>
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Overall Grade</p>
+                                            <p className="text-xl font-semibold text-emerald-500">
+                                                {stats.gradePercentage}%
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+/* ─────────────────────────────────────────────────────────────
    Single Section Panel (accordion item)
 ───────────────────────────────────────────────────────────── */
 const SectionPanel = ({ section, initialStudents, onDelete, onArchive }) => {
@@ -75,6 +187,7 @@ const SectionPanel = ({ section, initialStudents, onDelete, onArchive }) => {
     const [addEmail, setAddEmail]   = useState('');
     const [showAddRow, setShowAddRow] = useState(false);
     const [modal, setModal]         = useState(null); // { type: 'delete'|'archive'|'removeStudent', studentId? }
+    const [profileStudent, setProfileStudent] = useState(null);
     const [toast, setToast]         = useState(null); // { message }
 
     const showToast = (message) => {
@@ -124,7 +237,11 @@ const SectionPanel = ({ section, initialStudents, onDelete, onArchive }) => {
                 </div>
             )}
 
-            {/* ── Confirm modals ───────────────────────────────────────── */}
+            {/* ── Confirm modals & Profile Modal ───────────────────────────────────────── */}
+            <ProfileModal
+                student={profileStudent}
+                onClose={() => setProfileStudent(null)}
+            />
             <ConfirmModal
                 open={modal?.type === 'delete'}
                 icon={<Trash2 size={18} className="text-red-500" />}
@@ -305,7 +422,10 @@ const SectionPanel = ({ section, initialStudents, onDelete, onArchive }) => {
 
                                             {/* Actions */}
                                             <div className="flex items-center gap-1.5 justify-end">
-                                                <button className="flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-white hover:bg-red-500 border border-slate-200 hover:border-red-500 px-2.5 py-1.5 rounded-lg transition-all duration-150 active:scale-95">
+                                                <button
+                                                    onClick={() => setProfileStudent(student)}
+                                                    className="flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-white hover:bg-red-500 border border-slate-200 hover:border-red-500 px-2.5 py-1.5 rounded-lg transition-all duration-150 active:scale-95"
+                                                >
                                                     <Eye size={11} />
                                                     Profile
                                                 </button>

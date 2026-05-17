@@ -19,6 +19,7 @@ import TeacherStudentReviewView from './views/teacher_view/TeacherStudentReviewV
 import ProblemSetsView from './views/teacher_view/ProblemSetsView';
 import CreateProblemView from './views/teacher_view/CreateProblemView';
 import ProblemCollectionView from './views/teacher_view/ProblemCollectionView';
+import PublishedProblemsView from './views/teacher_view/PublishedProblemsView';
 import ExploreProblemSetsView from './views/teacher_view/ExploreProblemSetsView';
 import TeacherProblemTestView from './views/teacher_view/TeacherProblemTestView';
 import TeacherHomeView from './views/teacher_view/TeacherHomeView';
@@ -68,6 +69,7 @@ const App = () => {
     const [selectedSubmission, setSelectedSubmission]   = useState(null);
     const [submissionCallbacks, setSubmissionCallbacks] = useState({});
     const [testProblem,         setTestProblem]         = useState(null);
+    const [editingProblem,      setEditingProblem]      = useState(null);
 
     const handleLogin = (userRole, userObj) => {
         setCurrentUser(userObj ?? { name: '', email: '', role: userRole, isProfileComplete: true });
@@ -319,8 +321,26 @@ const App = () => {
                     {role === 'teacher' && activeTab === 'problem-sets' && (
                         <ProblemSetsView
                             onCollection={() => setActiveTab('problem-sets-collection')}
+                            onPublished={() => setActiveTab('problem-sets-published')}
                             onExplore={() => setActiveTab('problem-sets-explore')}
-                            onCreate={() => setActiveTab('problem-sets-create')}
+                            onCreate={() => {
+                                setEditingProblem(null);
+                                setActiveTab('problem-sets-create');
+                            }}
+                        />
+                    )}
+                    {role === 'teacher' && activeTab === 'problem-sets-published' && (
+                        <PublishedProblemsView
+                            publishedProblems={DUMMY_PUBLIC_PROBLEMS.filter(p => p.author === currentUser?.name || p.author === 'Danny Casimero')}
+                            onBack={() => setActiveTab('problem-sets')}
+                            onEditProblem={(problem) => {
+                                setEditingProblem(problem);
+                                setActiveTab('problem-sets-create');
+                            }}
+                            onDeleteProblem={(problemId) => {
+                                // TODO: DELETE /api/problems/:id
+                                console.log('Delete problem:', problemId);
+                            }}
                         />
                     )}
                     {role === 'teacher' && activeTab === 'problem-sets-collection' && (
@@ -352,15 +372,37 @@ const App = () => {
                     )}
                     {role === 'teacher' && activeTab === 'problem-sets-create' && (
                         <CreateProblemView
-                            onBack={() => setActiveTab('problem-sets-collection')}
+                            initialProblem={editingProblem}
+                            onBack={() => {
+                                setActiveTab(editingProblem ? 'problem-sets-published' : 'problem-sets-collection');
+                                setEditingProblem(null);
+                            }}
                             onTest={(data) => {
                                 setTestProblem(data);
                                 setActiveTab('problem-test');
                             }}
                             onFinish={(data) => {
-                                // TODO: POST /api/problems
-                                console.log('Create problem:', data);
-                                setActiveTab('problem-sets-collection');
+                                if (editingProblem) {
+                                    // TODO: PUT /api/problems/:id
+                                    console.log('Update problem:', data);
+                                    
+                                    // Mutate the object for immediate UI consistency
+                                    Object.assign(editingProblem, {
+                                        title: data.title,
+                                        difficulty: data.difficulty,
+                                        description: data.description,
+                                        constraints: data.constraints,
+                                        sampleTestcases: data.sampleTestcases,
+                                        hiddenTestcases: data.hiddenTestcases
+                                    });
+
+                                    setActiveTab('problem-sets-published');
+                                } else {
+                                    // TODO: POST /api/problems
+                                    console.log('Create problem:', data);
+                                    setActiveTab('problem-sets-collection');
+                                }
+                                setEditingProblem(null);
                             }}
                         />
                     )}

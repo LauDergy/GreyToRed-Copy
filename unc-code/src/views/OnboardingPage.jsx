@@ -18,7 +18,10 @@ const COURSES = ['BSCS', 'BSIT', 'BSIS', 'BSECE', 'BSCpE', 'Other'];
  *               In production: PATCH /api/users/me { studentId, yearLevel, course, isProfileComplete: true }
  */
 const OnboardingPage = ({ user, onComplete }) => {
-    const [form, setForm] = useState({ studentId: '', yearLevel: '', course: '' });
+    const initialFirstName = user?.name?.split(' ')[0] ?? '';
+    const initialLastName = user?.name?.split(' ').slice(1).join(' ') ?? '';
+
+    const [form, setForm] = useState({ firstName: initialFirstName, lastName: initialLastName, studentId: '', yearLevel: '', course: '' });
     const [errors, setErrors] = useState({});
     const [step, setStep] = useState(1); // 1 = intro, 2 = form
 
@@ -30,6 +33,8 @@ const OnboardingPage = ({ user, onComplete }) => {
 
     const validate = () => {
         const errs = {};
+        if (!form.firstName.trim())      errs.firstName  = 'First name is required.';
+        if (!form.lastName.trim())       errs.lastName   = 'Last name is required.';
         if (!form.studentId.trim())      errs.studentId  = 'Student ID is required.';
         else if (!/^\d{2}-\d{4,5}$/.test(form.studentId.trim()))
                                           errs.studentId  = 'Format: 25-29019';
@@ -42,8 +47,14 @@ const OnboardingPage = ({ user, onComplete }) => {
         e.preventDefault();
         const errs = validate();
         if (Object.keys(errs).length) { setErrors(errs); return; }
-        // TODO: PATCH /api/users/me { studentId, yearLevel, course, isProfileComplete: true }
-        onComplete({ studentId: form.studentId.trim(), yearLevel: form.yearLevel, course: form.course });
+        // TODO: PATCH /api/users/me { firstName, lastName, studentId, yearLevel, course, isProfileComplete: true }
+        onComplete({ 
+            firstName: form.firstName.trim(), 
+            lastName: form.lastName.trim(), 
+            studentId: form.studentId.trim(), 
+            yearLevel: form.yearLevel, 
+            course: form.course 
+        });
     };
 
     const firstName = user?.name?.split(' ')[0] ?? 'there';
@@ -95,6 +106,28 @@ const OnboardingPage = ({ user, onComplete }) => {
                             <div>
                                 <p className="text-xs font-bold uppercase tracking-widest text-red-400 mb-1">Step 2 of 2</p>
                                 <h2 className="text-2xl font-light text-slate-800 tracking-tight">Complete your profile</h2>
+                            </div>
+
+                            {/* Name fields */}
+                            <div className="flex gap-4">
+                                <Field
+                                    label="First Name"
+                                    name="firstName"
+                                    type="text"
+                                    placeholder="e.g. John"
+                                    value={form.firstName}
+                                    error={errors.firstName}
+                                    onChange={handleChange}
+                                />
+                                <Field
+                                    label="Last Name"
+                                    name="lastName"
+                                    type="text"
+                                    placeholder="e.g. Doe"
+                                    value={form.lastName}
+                                    error={errors.lastName}
+                                    onChange={handleChange}
+                                />
                             </div>
 
                             {/* Student ID */}
